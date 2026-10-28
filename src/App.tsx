@@ -9,6 +9,7 @@ import GameSection from './components/GameSection';
 import MemeSection from './components/MemeSection';
 import MessageSection from './components/MessageSection';
 import ColorSurprise from './components/ColorSurprise';
+import CountdownTimer from './components/CountdownTimer';
 import Footer from './components/Footer';
 
 function SplashScreen({ onComplete }: { onComplete: () => void }) {
@@ -168,6 +169,14 @@ export default function App() {
               <div className="h-px w-20 bg-gradient-to-l from-transparent to-pink-300" />
             </div>
             
+            <div className="flex items-center justify-center py-8">
+              <div className="h-px w-20 bg-gradient-to-r from-transparent to-purple-300" />
+              <span className="mx-4 text-xl">✨</span>
+              <div className="h-px w-20 bg-gradient-to-l from-transparent to-purple-300" />
+            </div>
+
+            <CountdownTimer />
+
             <div className="flex items-center justify-center py-8">
               <div className="h-px w-20 bg-gradient-to-r from-transparent to-purple-300" />
               <span className="mx-4 text-xl">✨</span>

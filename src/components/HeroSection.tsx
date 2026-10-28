@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Heart, Sparkles, Star } from 'lucide-react';
 
 const noMessages = [
@@ -17,7 +17,21 @@ const ribbonColors = [
   '#38bdf8', '#f472b6', '#fbbf24', '#818cf8',
 ];
 
+const BIRTHDAY = new Date('2026-10-29T00:00:00');
+
+function getBirthdayTimeLeft() {
+  const diff = BIRTHDAY.getTime() - Date.now();
+  if (diff <= 0) return null;
+  return {
+    days:    Math.floor(diff / (1000 * 60 * 60 * 24)),
+    hours:   Math.floor((diff / (1000 * 60 * 60)) % 24),
+    minutes: Math.floor((diff / (1000 * 60)) % 60),
+    seconds: Math.floor((diff / 1000) % 60),
+  };
+}
+
 export default function HeroSection({ onCountdownComplete }: { onCountdownComplete?: () => void }) {
+  const [timeLeft, setTimeLeft] = useState(getBirthdayTimeLeft());
   const [showMessage, setShowMessage] = useState(false);
   const [proposalStage, setProposalStage] = useState<'hidden' | 'ribbons' | 'box' | 'question' | 'success'>('hidden');
   const [noClickCount, setNoClickCount] = useState(0);
@@ -25,6 +39,7 @@ export default function HeroSection({ onCountdownComplete }: { onCountdownComple
   const [noButtonPos, setNoButtonPos] = useState({ x: 0, y: 0 });
   const [noButtonVisible, setNoButtonVisible] = useState(true);
   const [showRibbonBurst, setShowRibbonBurst] = useState(false);
+  const triggeredRef = useRef(false);
 
   const teleportNoButton = useCallback(() => {
     const maxX = window.innerWidth - 150;
@@ -36,8 +51,22 @@ export default function HeroSection({ onCountdownComplete }: { onCountdownComple
 
   useEffect(() => {
     const t = setTimeout(() => setShowMessage(true), 800);
-    return () => clearTimeout(t);
-  }, []);
+    const interval = setInterval(() => {
+      const left = getBirthdayTimeLeft();
+      setTimeLeft(left);
+      if (!left && !triggeredRef.current) {
+        triggeredRef.current = true;
+        clearInterval(interval);
+        setShowRibbonBurst(true);
+        setProposalStage('ribbons');
+        onCountdownComplete?.();
+      }
+    }, 1000);
+    return () => {
+      clearTimeout(t);
+      clearInterval(interval);
+    };
+  }, [onCountdownComplete]);
 
   // After ribbon burst → box
   useEffect(() => {
@@ -183,7 +212,7 @@ export default function HeroSection({ onCountdownComplete }: { onCountdownComple
         </motion.div>
       )}
 
-      {/* Surprise Button */}
+      {/* Countdown to 29 Oct & Surprise Button */}
       {proposalStage === 'hidden' && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -191,6 +220,35 @@ export default function HeroSection({ onCountdownComplete }: { onCountdownComple
           transition={{ delay: 0.6, duration: 0.8, type: 'spring' }}
           className="z-10 mb-8 flex flex-col items-center"
         >
+          <p className="text-center text-purple-500 font-quicksand font-semibold mb-4 text-lg">
+            ⏳ Countdown to 29 October 🎂
+          </p>
+          
+          <div className="flex gap-3 md:gap-6 mb-6">
+            {[
+              { label: 'Days',    value: timeLeft?.days ?? 0 },
+              { label: 'Hours',   value: timeLeft?.hours ?? 0 },
+              { label: 'Minutes', value: timeLeft?.minutes ?? 0 },
+              { label: 'Seconds', value: timeLeft?.seconds ?? 0 },
+            ].map((item) => (
+              <motion.div
+                key={item.label}
+                className="glass-card rounded-2xl p-3 md:p-5 text-center min-w-[70px] md:min-w-[100px] glow-pink"
+                whileHover={{ scale: 1.1, rotate: 2 }}
+              >
+                <motion.span
+                  key={item.value}
+                  initial={{ scale: 1.3, opacity: 0.7 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="block text-2xl md:text-4xl font-bold text-pink-deep"
+                >
+                  {String(item.value).padStart(2, '0')}
+                </motion.span>
+                <span className="text-xs md:text-sm text-purple-400 font-medium">{item.label}</span>
+              </motion.div>
+            ))}
+          </div>
+
           <motion.button
             onClick={() => {
               setShowRibbonBurst(true);
@@ -213,7 +271,7 @@ export default function HeroSection({ onCountdownComplete }: { onCountdownComple
               transition={{ delay: 0.4, duration: 0.8 }}
               className="text-center mt-6 font-dancing text-xl md:text-2xl text-purple-500 italic"
             >
-              Tap the button above for your special surprise! 💕
+              Counting down to 29 Oct! Or tap above to open now 💕
             </motion.p>
           )}
         </motion.div>
